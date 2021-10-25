@@ -18,8 +18,7 @@ git clone https://github.com/ABD-01/ros_pid.git
 
 Build the package in catkin workspace
 ```
-cd ~/catkin_ws
-catkin_make
+cd ~/catkin_ws && catkin_make
 ```
 
 To start ROS Master
@@ -54,5 +53,18 @@ Start the rqt graph for visualization
 ```
 rqt_plot /plot/error/data[0] /plot/error/data[1]
 ```
-
 ![results](/assets/rospid.gif)
+
+## Tuning coefficients Kp, Ki, Kd
+
+Custom coefficient values and loop rate can be passed while creating the PID class instance.
+
+```py
+  pid = PID(
+      final_pose,
+      Krot1=K(4, 0, 2),
+      Ktrans=K(0.5, 0.001, 0.02),
+      Krot2=K(1, 0.0, 0.01),
+      loop_rate=10
+  )
+```
