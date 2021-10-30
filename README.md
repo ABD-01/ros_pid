@@ -46,7 +46,7 @@ optional arguments:
 ```
 For eg:
 ```
-rosrun ros_pid turtlesim_pid.py -x 1 -y 1 -t 120
+rosrun ros_pid turtlesim_diff.py -x 1 -y 1 -t 120
 ```
 
 Start the rqt graph for visualization
@@ -62,9 +62,8 @@ Custom coefficient values and loop rate can be passed while creating the PID cla
 ```py
   pid = PID(
       final_pose,
-      Krot1=K(4, 0, 2),
-      Ktrans=K(0.5, 0.001, 0.02),
-      Krot2=K(1, 0.0, 0.01),
-      loop_rate=10
+      k=K(6, 0.0, 1),
+      loop_rate=10,
+      v0 = 1
   )
 ```
