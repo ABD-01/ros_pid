@@ -33,7 +33,7 @@ rosrun turtlesim turtlesim_node
 
 Run the PID simulator with command line arguments for final pose.
 ```
-rosrun ros_pid turtlesim_pid.py [-h] -x X -y Y -t THETA
+rosrun ros_pid turtlesim_diff.py [-h] -x X -y Y -t THETA
 
 Input final pose
 
