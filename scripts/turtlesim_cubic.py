@@ -65,8 +65,8 @@ class PID:
     def __init__(
         self,
         final_pose: Pose,
-        k=K(2, 0.0, 0),
-        ka=K(2, 0.0, 0),
+        k=K(0.08, 0.001, 0),
+        ka=K(0.5, 0.0, 0),
         loop_rate=10,
 
     ):
@@ -92,7 +92,7 @@ class PID:
             [cos(self.current_pose.theta), sin(self.current_pose.theta)], # start (x', y')
             [cos(self.final_pose.theta), sin(self.final_pose.theta)]      # final (x', y')
         )
-        self.hermite.view_traj()
+        # self.hermite.view_traj()
 
     def callback(self, pose_msg):
         self.current_pose = pose_msg
@@ -102,7 +102,7 @@ class PID:
     def get_error(self, p_desired):
         diff = p_desired - array([self.current_pose.x, self.current_pose.y])
         distance = linalg.norm(diff)
-        angle = arctan2(diff[0], diff[1])
+        angle = arctan2(diff[1], diff[0]) - self.current_pose.theta
         return float(distance), float(angle)
 
     def move(self):
@@ -112,21 +112,27 @@ class PID:
 
         # t0 = rospy.Time.now().to_sec()
         time = 0
-        i = 0
+        p_desired = self.hermite(time)
+        tol = 1e-2
         while True:
             # t1 =  rospy.Time.now().to_sec()
             # time = t1 - t0
-            if i%2 == 0:
-                time += 0.05
 
-            p_desired = self.hermite(time)
-            print("Desired point:", p_desired)
+            print(f"Planed path {time:.2f}: [{self.current_pose.x, self.current_pose.y}] -> {p_desired}")
             error, error_a = self.get_error(p_desired.squeeze())
-            print("Error:", error)
-            linear_speed = error * self.k.kp
+            error_a = math.atan2(math.sin(error_a), math.cos(error_a))
+            E += error
+
+            if error <= tol:
+                time += 0.05
+                E = 0
+                p_desired = self.hermite(time)
+
+            # print("Error:", error, error_a)
+            linear_speed = error * self.k.kp + E * self.k.ki
             angular_speed  = error_a * self.ka.kp
 
-            print(linear_speed, angular_speed)
+            # print(linear_speed, angular_speed)
             vel_msg.linear.x = linear_speed
             vel_msg.angular.z = angular_speed
 
