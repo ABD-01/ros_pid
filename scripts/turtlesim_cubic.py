@@ -65,8 +65,8 @@ class PID:
     def __init__(
         self,
         final_pose: Pose,
-        k=K(0.08, 0.001, 0),
-        ka=K(0.5, 0.0, 0),
+        k=K(0.1, 0.005, 0.010),
+        ka=K(0.8, 0.0, 0),
         loop_rate=10,
 
     ):
@@ -86,13 +86,14 @@ class PID:
         self.k = k
         self.ka = ka
 
+        s = 5
         self.hermite = Hermite(
             [self.current_pose.x, self.current_pose.y], # start (x,y)
             [self.final_pose.x, self.final_pose.y],     # final (x,y)
-            [cos(self.current_pose.theta), sin(self.current_pose.theta)], # start (x', y')
-            [cos(self.final_pose.theta), sin(self.final_pose.theta)]      # final (x', y')
+            [s * cos(self.current_pose.theta), s * sin(self.current_pose.theta)], # start (x', y')
+            [s * cos(self.final_pose.theta), s * sin(self.final_pose.theta)]      # final (x', y')
         )
-        # self.hermite.view_traj()
+        self.hermite.view_traj()
 
     def callback(self, pose_msg):
         self.current_pose = pose_msg
@@ -121,22 +122,25 @@ class PID:
             print(f"Planed path {time:.2f}: [{self.current_pose.x, self.current_pose.y}] -> {p_desired}")
             error, error_a = self.get_error(p_desired.squeeze())
             error_a = math.atan2(math.sin(error_a), math.cos(error_a))
-            E += error
 
             if error <= tol:
                 time += 0.05
                 E = 0
+                error_old = 0
                 p_desired = self.hermite(time)
 
             # print("Error:", error, error_a)
-            linear_speed = error * self.k.kp + E * self.k.ki
+            linear_speed = error * self.k.kp + E * self.k.ki + error_old * self.k.kd
             angular_speed  = error_a * self.ka.kp
+
+            error_old = error
+            E += error
 
             # print(linear_speed, angular_speed)
             vel_msg.linear.x = linear_speed
             vel_msg.angular.z = angular_speed
 
-            if time > 1:
+            if time > 1.0:
                 vel_msg.linear.x = 0
                 vel_msg.angular.z = 0
 
