@@ -65,8 +65,8 @@ class PID:
     def __init__(
         self,
         final_pose: Pose,
-        k=K(0.1, 0.005, 0.010),
-        ka=K(0.8, 0.0, 0),
+        k=K(0.2, 0.005, 0.010),
+        ka=K(1.6, 0.0, 0),
         loop_rate=10,
 
     ):
@@ -86,7 +86,7 @@ class PID:
         self.k = k
         self.ka = ka
 
-        s = 5
+        s = 10
         self.hermite = Hermite(
             [self.current_pose.x, self.current_pose.y], # start (x,y)
             [self.final_pose.x, self.final_pose.y],     # final (x,y)
