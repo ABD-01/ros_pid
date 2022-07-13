@@ -65,7 +65,7 @@ class PID:
     def __init__(
         self,
         final_pose: Pose,
-        k=K(0.2, 0.005, 0.010),
+        k=K(0.9, 0.01, 0.5),
         ka=K(1.6, 0.0, 0),
         loop_rate=10,
 
@@ -86,7 +86,7 @@ class PID:
         self.k = k
         self.ka = ka
 
-        s = 10
+        s = 20
         self.hermite = Hermite(
             [self.current_pose.x, self.current_pose.y], # start (x,y)
             [self.final_pose.x, self.final_pose.y],     # final (x,y)
@@ -114,7 +114,7 @@ class PID:
         # t0 = rospy.Time.now().to_sec()
         time = 0
         p_desired = self.hermite(time)
-        tol = 1e-2
+        tol = 1e-1
         while True:
             # t1 =  rospy.Time.now().to_sec()
             # time = t1 - t0
@@ -123,11 +123,12 @@ class PID:
             error, error_a = self.get_error(p_desired.squeeze())
             error_a = math.atan2(math.sin(error_a), math.cos(error_a))
 
-            if error <= tol:
-                time += 0.05
-                E = 0
-                error_old = 0
-                p_desired = self.hermite(time)
+            # if error <= tol:
+            if time <= 1:   
+                time += 0.01
+            E = 0
+            error_old = 0
+            p_desired = self.hermite(time)
 
             # print("Error:", error, error_a)
             linear_speed = error * self.k.kp + E * self.k.ki + error_old * self.k.kd
@@ -136,13 +137,18 @@ class PID:
             error_old = error
             E += error
 
-            # print(linear_speed, angular_speed)
+            print(linear_speed, angular_speed)
             vel_msg.linear.x = linear_speed
             vel_msg.angular.z = angular_speed
 
-            if time > 1.0:
+            # if time > 1.0:
+            final_errors = self.get_error(self.hermite(0.95).squeeze())
+            if final_errors[0] < 1e-1 and abs(final_errors[1]) < 1e-1:
                 vel_msg.linear.x = 0
                 vel_msg.angular.z = 0
+                print("STOPPED")
+            else:
+                print(f"Final Errors {final_errors}")
 
             self.publisher.publish(vel_msg)
             self.loop_rate.sleep()
