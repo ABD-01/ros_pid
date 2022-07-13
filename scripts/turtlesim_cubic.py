@@ -65,7 +65,7 @@ class PID:
     def __init__(
         self,
         final_pose: Pose,
-        k=K(0.2, 0.005, 0.010),
+        k=K(0.9, 0.1, 0.010),
         ka=K(1.6, 0.0, 0),
         loop_rate=10,
 
@@ -114,7 +114,7 @@ class PID:
         # t0 = rospy.Time.now().to_sec()
         time = 0
         p_desired = self.hermite(time)
-        tol = 1e-2
+        tol = 1e-1
         while True:
             # t1 =  rospy.Time.now().to_sec()
             # time = t1 - t0
@@ -124,7 +124,7 @@ class PID:
             error_a = math.atan2(math.sin(error_a), math.cos(error_a))
 
             if error <= tol:
-                time += 0.05
+                time += 0.1
                 E = 0
                 error_old = 0
                 p_desired = self.hermite(time)
